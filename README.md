@@ -1,79 +1,58 @@
 # DailyStreaks
 
-DailyStreaks is a lightweight GitHub streak card generator (SVG) for profile READMEs.
+Generate an auto-updating GitHub streak SVG card for your profile README.
 
-It computes streaks from full account history (starting at account creation date), then overlays recent push events so same-day activity appears faster.
+- Uses full contribution history (GraphQL) + recent push events (REST) for faster same-day updates.
+- Output file: `assets/github-streak.svg`.
+- Auto-update workflow: `.github/workflows/update-streaks.yml`.
 
-## Recommended image URL
+## Quick setup (start to finish)
 
-Use the branch that your workflow actively updates:
+### Step 1) Fork or clone this repository
 
-```text
-https://raw.githubusercontent.com/futurisme/DailyStreaks/main/assets/github-streak.svg
-```
+Use this repo as-is or fork it to your own account.
 
-## Project structure
+### Step 2) Set repository variables
 
-```text
-.
-├── .github/workflows/update-streaks.yml
-├── assets/github-streak.svg
-├── examples/sample_events.json
-└── src/dailystreaks.py
-```
-
-## Setup
-
-### 1) Repository variables
-Path: **Settings → Secrets and variables → Actions → Variables**
+Go to **Settings → Secrets and variables → Actions → Variables**.
 
 Required:
-- `STREAK_USERNAME` (target GitHub username)
+- `STREAK_USERNAME`: GitHub username to track.
 
 Optional:
-- `STREAK_TIMEZONE_OFFSET` (default: `0`)
-- `STREAK_MAX_PAGES` (default: `5`, clamped to `1..10`)
-- `STREAK_LOOKBACK_DAYS` (default: `45`)
+- `STREAK_TIMEZONE_OFFSET` (default `0`, valid range `-12..14`)
+- `STREAK_MAX_PAGES` (default `5`, internally clamped to `1..10`)
+- `STREAK_LOOKBACK_DAYS` (default `45`)
 
-### 2) Repository secrets
-Path: **Settings → Secrets and variables → Actions → Secrets**
+### Step 3) Confirm workflow permissions
 
-No extra secret is required for default usage. The workflow uses `secrets.GITHUB_TOKEN`.
+Go to **Settings → Actions → General → Workflow permissions** and set:
+- **Read and write permissions**
 
-### 3) Workflow permissions
-Path: **Settings → Actions → General → Workflow permissions**
+This allows `github-actions[bot]` to commit the generated SVG.
 
-Set to **Read and write permissions** so `github-actions[bot]` can commit `assets/github-streak.svg`.
+### Step 4) Run the workflow once
 
-### 4) First run
-- Open **Actions**
-- Select **Update Daily Streak Card**
-- Click **Run workflow**
+Go to **Actions → Update Daily Streak Card → Run workflow**.
 
-### 5) Embed in profile README
+After success, `assets/github-streak.svg` will be generated/updated.
+
+### Step 5) Embed the card in your profile README
 
 ```md
-![DailyStreaks](https://raw.githubusercontent.com/futurisme/DailyStreaks/main/assets/github-streak.svg)
+![DailyStreaks](https://raw.githubusercontent.com/futurisme/daily_streak/main/assets/github-streak.svg)
 ```
 
-## Local usage
+## Local run (optional)
 
 Online mode:
 
 ```bash
-python3 src/dailystreaks.py \
-  --username futurisme \
-  --timezone-offset 7 \
-  --max-pages 5 \
-  --lookback-days 45 \
-  --output assets/github-streak.svg
+python3 src/dailystreaks.py --username futurisme --output assets/github-streak.svg
 ```
 
-Offline mode:
+Offline mode with sample events:
 
 ```bash
-python3 src/dailystreaks.py \
-  --username demo \
-  --events-file examples/sample_events.json \
-  --output assets/github-streak.svg
+python3 src/dailystreaks.py --username demo --events-file examples/sample_events.json --output assets/github-streak.svg
 ```
