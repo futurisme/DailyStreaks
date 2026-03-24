@@ -93,9 +93,11 @@ def _request_json(request: urllib.request.Request, error_prefix: str) -> dict | 
 def _request_json_and_headers(
     request: urllib.request.Request,
     error_prefix: str,
+    passthrough_statuses: set[int] | None = None,
 ) -> tuple[dict | list, Mapping[str, Any]]:
     """Run request with retries and return JSON payload + headers."""
 
+    passthrough_statuses = passthrough_statuses or set()
     last_error: Exception | None = None
     for attempt in range(1, MAX_RETRIES + 1):
         try:
@@ -103,6 +105,8 @@ def _request_json_and_headers(
                 payload = json.loads(response.read().decode("utf-8"))
                 return payload, response.headers
         except urllib.error.HTTPError as exc:
+            if exc.code in passthrough_statuses:
+                raise
             body = exc.read().decode("utf-8", errors="ignore")
             transient = exc.code in {403, 429, 500, 502, 503, 504}
             last_error = RuntimeError(f"{error_prefix} {exc.code}: {body}")
@@ -236,7 +240,11 @@ def fetch_recent_push_events(
         request = urllib.request.Request(next_url, headers=build_headers(token))
 
         try:
-            payload, headers = _request_json_and_headers(request, "GitHub API error")
+            payload, headers = _request_json_and_headers(
+                request,
+                "GitHub API error",
+                passthrough_statuses={422},
+            )
             link_header = headers.get("Link")
         except urllib.error.HTTPError as exc:
             msg = exc.read().decode("utf-8", errors="ignore")
